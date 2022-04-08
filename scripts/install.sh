@@ -13,7 +13,7 @@ function fail {
 function install {
 	#settings
 	USER="{{ .User }}"
-	PROG="{{ .Program }}"
+	PROG='{{ if eq .Program "cli" }}ignite{{ else }}{{ .Program }}{{ end }}'
 	MOVE="{{ .MoveToPath }}"
 	RELEASE="{{ .Release }}"
 	INSECURE="{{ .Insecure }}"
@@ -68,7 +68,7 @@ function install {
 	*) fail "No asset for platform ${OS}-${ARCH}";;
 	esac
 	#got URL! download it...
-	echo -n "{{ if .MoveToPath }}Installing{{ else }}Downloading{{ end }} $USER/$PROG $RELEASE"
+	echo -n "{{ if .MoveToPath }}Installing{{ else }}Downloading{{ end }} $PROG $RELEASE"
 	{{ if .Google }}
 	#matched using google, give time to cancel
 	echo -n " in 5 seconds"
