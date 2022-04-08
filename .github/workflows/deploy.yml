@@ -27,21 +27,21 @@ jobs:
 
       - name: Build and Push
         run: |
-          docker build -t gcr.io/tendermint/starport-installer:${GITHUB_SHA::8} .
-          docker tag gcr.io/tendermint/starport-installer:${GITHUB_SHA::8} gcr.io/tendermint/starport-installer:latest
-          docker push gcr.io/tendermint/starport-installer:${GITHUB_SHA::8}
-          docker push gcr.io/tendermint/starport-installer:latest
+          docker build -t gcr.io/tendermint/ignite-installer:${GITHUB_SHA::8} .
+          docker tag gcr.io/tendermint/ignite-installer:${GITHUB_SHA::8} gcr.io/tendermint/ignite-installer:latest
+          docker push gcr.io/tendermint/ignite-installer:${GITHUB_SHA::8}
+          docker push gcr.io/tendermint/ignite-installer:latest
 
       - name: Deploy to cloud run
-        run: gcloud beta run deploy starport-installer --quiet
+        run: gcloud beta run deploy ignite-installer --quiet
           --region us-east1
           --platform managed
           --allow-unauthenticated
-          --image gcr.io/tendermint/starport-installer:latest
+          --image gcr.io/tendermint/ignite-installer:latest
           --concurrency 80
           --memory 128Mi
           --cpu 1000m
           --max-instances 3
           --port 8080
           --timeout 300s
-          --update-env-vars USER=tendermint
+          --update-env-vars USER=ignite-hq
