@@ -1,4 +1,4 @@
-module github.com/allinbits/starport-installer
+module github.com/ignite-hq/installer
 
 go 1.14
 

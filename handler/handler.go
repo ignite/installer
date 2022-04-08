@@ -59,7 +59,7 @@ type Handler struct {
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/" {
-		http.Redirect(w, r, "https://starport.network", http.StatusMovedPermanently)
+		http.Redirect(w, r, "https://ignite.com", http.StatusMovedPermanently)
 		return
 	}
 	//calculate reponse type
