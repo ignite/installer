@@ -1,48 +1,62 @@
-name: build and deploy
+name: Deploy to Google Cloud
 
 on:
   push:
     branches:
       - master
+      - fix/deploy
 
 jobs:
-  build_deploy:
-    name: Build and deploy
+  deploy_docker_image_to_gcr:
+    name: Build & push to Google Registry
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v1
+        uses: actions/checkout@v3
 
-      - id: 'auth'
-        uses: 'google-github-actions/auth@v0'
+      - name: Google Auth
+        id: auth
+        uses: 'google-github-actions/auth@v1'
         with:
-          credentials_json: '${{ secrets.GOOGLE_SERVICE_ACCOUNT_B64 }}'
+          credentials_json: '${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}'
+          token_format: 'access_token'
 
-      - name: Setup gcloud cli
-        uses: google-github-actions/setup-gcloud@v0
+      - name: Login to Google Container Registry
+        id: docker-auth
+        uses: 'docker/login-action@v2'
+        with:
+          username: 'oauth2accesstoken'
+          password: '${{ steps.auth.outputs.access_token }}'
+          registry: 'europe-docker.pkg.dev'
 
-      - name: Configure docker and install gcloud components
-        run: |
-          gcloud auth configure-docker --quiet
-          gcloud components install beta --quiet
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: europe-docker.pkg.dev/igntservices/cli-installer/ignite-installer
+          tags: |
+            type=raw,value=latest
+            type=semver,pattern=v{{version}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
       - name: Build and Push
         run: |
-          docker build -t gcr.io/tendermint/ignite-installer:${GITHUB_SHA::8} .
-          docker tag gcr.io/tendermint/ignite-installer:${GITHUB_SHA::8} gcr.io/tendermint/ignite-installer:latest
-          docker push gcr.io/tendermint/ignite-installer:${GITHUB_SHA::8}
-          docker push gcr.io/tendermint/ignite-installer:latest
-
-      - name: Deploy to cloud run
-        run: gcloud beta run deploy ignite-installer --quiet
-          --region us-east1
-          --platform managed
-          --allow-unauthenticated
-          --image gcr.io/tendermint/ignite-installer:latest
-          --concurrency 80
-          --memory 128Mi
-          --cpu 1000m
-          --max-instances 3
-          --port 8080
-          --timeout 300s
-          --update-env-vars USER=ignite-hq
+          gcloud beta run deploy ignite-installer --quiet \
+            --region us-east1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --image europe-docker.pkg.dev/igntservices/cli-installer/ignite-installer:latest \
+            --concurrency 80 \
+            --memory 128Mi \
+            --cpu 1000m \
+            --max-instances 3 \
+            --port 8080 \
+            --timeout 300s \
+            --update-env-vars USER=ignite

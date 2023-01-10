@@ -1,0 +1,39 @@
+name: Deploy to Github
+
+on:
+  push:
+    branches:
+      - master
+      - fix/deploy
+
+jobs:
+  deploy_docker_image:
+    name: Build & push to Github Registry
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=latest
+            type=semver,pattern=v{{version}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
