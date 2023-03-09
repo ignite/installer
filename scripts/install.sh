@@ -121,16 +121,19 @@ function install {
 	#move into PATH or cwd
 	chmod +x $TMP_BIN || fail "chmod +x failed"
 
+
   {{ if or ( .SudoMove ) ( .MoveToPath ) }}
 	if [ -w $OUT_DIR ]; then
 	 	mv $TMP_BIN $OUT_DIR/$PROG || fail "mv failed" #FINAL STEP!
 	else
 	 	sudo mv $TMP_BIN $OUT_DIR/$PROG || fail "mv failed" #FINAL STEP!
 	fi
+  {{ else }}
+	 	mv $TMP_BIN $OUT_DIR/$PROG || fail "mv failed" #FINAL STEP!
   {{ end }}
 
-	echo "{{ if .MoveToPath }}Installed at{{ else }}Downloaded to{{ end }} $OUT_DIR/$PROG"
-	#done
-	cleanup
+  echo "{{ if .MoveToPath }}Installed at{{ else }}Downloaded to{{ end }} $OUT_DIR/$PROG"
+  cleanup
+
 }
 install
