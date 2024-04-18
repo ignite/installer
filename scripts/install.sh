@@ -10,37 +10,40 @@ function fail {
 	echo "Error: $msg" 1>&2
 	exit 1
 }
+function find_get {
+  INSECURE="{{ .Insecure }}"
+	GET=""
+	if which curl > /dev/null; then
+		GET="curl"
+		if [[ $INSECURE = "true" ]]; then GET="$GET --insecure"; fi
+		echo "$GET --fail -# -L"
+	elif which wget > /dev/null; then
+		GET="wget"
+		if [[ $INSECURE = "true" ]]; then GET="$GET --no-check-certificate"; fi
+		echo "$GET -qO-"
+	else
+		fail "neither wget/curl are installed"
+	fi
+}
 function install {
 	#settings
 	USER="{{ .User }}"
 	PROG='{{ if eq .Program "cli" }}ignite{{ else }}{{ .Program }}{{ end }}'
 	MOVE="{{ .MoveToPath }}"
 	RELEASE="{{ .Release }}"
-	INSECURE="{{ .Insecure }}"
 	OUT_DIR="{{ if .MoveToPath }}/usr/local/bin{{ else }}$(pwd){{ end }}"
 	GH="https://github.com"
 	#bash check
 	[ ! "$BASH_VERSION" ] && fail "Please use bash instead"
 	[ ! -d $OUT_DIR ] && fail "output directory missing: $OUT_DIR"
-	#dependency check, assume we are a standard POISX machine
+	#dependency check, assume we are a standard POSIX machine
 	which find > /dev/null || fail "find not installed"
 	which xargs > /dev/null || fail "xargs not installed"
 	which sort > /dev/null || fail "sort not installed"
 	which tail > /dev/null || fail "tail not installed"
 	which cut > /dev/null || fail "cut not installed"
 	which du > /dev/null || fail "du not installed"
-	GET=""
-	if which curl > /dev/null; then
-		GET="curl"
-		if [[ $INSECURE = "true" ]]; then GET="$GET --insecure"; fi
-		GET="$GET --fail -# -L"
-	elif which wget > /dev/null; then
-		GET="wget"
-		if [[ $INSECURE = "true" ]]; then GET="$GET --no-check-certificate"; fi
-		GET="$GET -qO-"
-	else
-		fail "neither wget/curl are installed"
-	fi
+	GET=$(find_get)
 	#find OS #TODO BSDs and other posixs
 	case `uname -s` in
 	Darwin) OS="darwin";;
@@ -136,4 +139,10 @@ function install {
   cleanup
 
 }
+function analytics {
+  GET=$(find_get)
+  MATOMO="https://aibignite.matomo.cloud/matomo.php?idsite=4&rec=1&urlref=https%3A%2F%2Fget.ignite.com%2Fcli%40{{ .Release }}&utm_source=local&utm_medium=dev-environment&utm_campaign=install-ignite-cli-binary&utm_content={{ .Release }}"
+  bash -c "$GET $MATOMO"
+}
 install
+analytics
