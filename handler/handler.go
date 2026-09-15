@@ -180,7 +180,7 @@ func (h *Handler) get(url string, v interface{}) error {
 	if h.Config.Token != "" {
 		req.Header.Set("Authorization", "token "+h.Config.Token)
 	}
-	resp, err := http.Get(url)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("Request failed: %s: %s", url, err)
 	}
