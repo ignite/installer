@@ -1,0 +1,15 @@
+[build]
+  publish = "public"
+
+[build.environment]
+  GO_VERSION = "1.26"
+
+[functions]
+  directory = "netlify/functions"
+
+# The installer is fully dynamic: every path is handled by the Go function.
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/installer/:splat"
+  status = 200
+  force = true
